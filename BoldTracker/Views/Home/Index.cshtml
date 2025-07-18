@@ -1,0 +1,363 @@
+﻿@model HomeViewModel
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="flex h-screen">
+    <!-- Sidebar -->
+    <div class="w-80 bg-white shadow-lg">
+        <!-- Header -->
+        <div class="p-6 border-b">
+            <h1 class="text-2xl font-bold text-orange-500">Made by Lova</h1>
+        </div>
+
+        <!-- Search -->
+        <div class="p-4">
+            <div class="relative">
+                <input type="text" placeholder="Search tasks..."
+                       class="w-full px-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                <svg class="absolute right-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="p-4 space-y-2">
+            <a href="#" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                <span class="text-sm">📋</span>
+                <span>All Tasks</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 px-4 py-2 bg-red-100 text-red-700 rounded-lg">
+                <span class="text-sm">⏰</span>
+                <span>Procrastinated</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                <span class="text-sm">✅</span>
+                <span>Done</span>
+            </a>
+        </nav>
+
+        <!-- Labels Section -->
+        <div class="p-4">
+            <div class="bg-green-100 text-green-800 px-4 py-2 rounded-lg mb-4">
+                <span class="font-medium">All Labels</span>
+            </div>
+            <div class="space-y-2">
+                <a href="#" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                    <span class="text-sm">🏗️</span>
+                    <span>Project Phoenix</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                    <span class="text-sm">💡</span>
+                    <span>Ideas</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                    <span class="text-sm">👤</span>
+                    <span>Personal</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-8">
+        <!-- Add Task Button -->
+        <div class="mb-8">
+            <button onclick="toggleModal('taskModal')"
+                    class="w-full px-4 py-3 bg-white border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-orange-500 hover:text-orange-500 transition-colors">
+                Add a task...
+            </button>
+        </div>
+
+        <!-- Tasks Grid -->
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    @foreach (var task in Model.TodoTasks)
+    {
+        var isDone = task.Status == TodoTaskStatus.DONE;
+        var isProcrastinated = task.Status == TodoTaskStatus.PROCRASTINATED;
+
+        var priorityClass = task.Priority switch
+        {
+            Priority.HIGH => "bg-red-100 text-red-800",
+            Priority.MEDIUM => "bg-yellow-100 text-yellow-800",
+            Priority.LOW => "bg-green-100 text-green-800",
+            _ => "bg-gray-100 text-gray-800"
+        };
+
+        <div class="task-card @((isProcrastinated ? "bg-red-50 border border-red-200" : "bg-white")) rounded-lg shadow-md p-6 relative">
+            @if (isProcrastinated)
+            {
+                <div class="absolute top-4 left-4 bg-red-500 text-white px-2 py-1 rounded text-xs">Procrastinated</div>
+            }
+
+            <div class="relative">
+                <button onclick="toggleDropdown('dropdown-@task.TodoTaskId')" class="absolute top-0 right-0 text-gray-400 hover:text-gray-600">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                    </svg>
+                </button>
+                <div id="dropdown-@task.TodoTaskId" class="hidden absolute top-6 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-32">
+                    <button
+                        onclick='openEditModal(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+                            TodoTaskId = task.TodoTaskId,
+                            Title = task.Title,
+                            Description = task.Description,
+                            DueDate = task.DueDate.ToString("yyyy-MM-dd"),
+                            Priority = task.Priority.ToString(),
+                            LabelId = task.LabelId,
+                            LabelName = task.Label?.Name
+                        })))'
+                        class="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 flex items-center">
+                        <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit
+                    </button>
+                    <button 
+                      type="button" 
+                      onclick="deleteTask(this, @task.TodoTaskId)" 
+                      class="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 flex items-center">
+                      <svg class="w-4 h-4 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Delete
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center mb-4 mt-6">
+                <input type="checkbox" class="mr-3 w-5 h-5 text-orange-500 rounded border-gray-300" @(isDone ? "checked" : "")>
+                <h3 class="font-semibold text-gray-800 @(isDone ? "line-through" : "")">@task.Title</h3>
+            </div>
+
+            <p class="text-gray-600 text-sm mb-4 @(isDone ? "line-through" : "")">@task.Description</p>
+
+            <div class="flex items-center justify-between text-xs text-gray-500">
+                <span>Due: @task.DueDate.ToString("MMM dd")</span>
+                <span class="@priorityClass px-2 py-1 rounded">@task.Priority</span>
+            </div>
+
+            @if (!string.IsNullOrEmpty(task.Label?.Name))
+            {
+                <div class="mt-2 text-xs text-gray-500">@task.Label.Name</div>
+            }
+        </div>
+    }
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Label Modal -->
+<div id="labelModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-semibold">Create a new label</h2>
+            <button onclick="toggleModal('labelModal')" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <p class="text-gray-600 mb-4">Enter a name for your new label.</p>
+
+        <div class="mb-6">
+            <input type="text" placeholder="Label Name"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+        </div>
+
+        <div class="flex justify-end">
+            <button class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                Create Label
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+@await Html.PartialAsync("_TaskModal", new CreateTodoTaskViewModel
+{
+    Labels = Model.Labels
+})
+
+@await Html.PartialAsync("_EditModal", new CreateTodoTaskViewModel
+{
+    Labels = Model.Labels
+})
+
+
+
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}
+
+
+
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+
+
+
+
+<script>
+  // Toggle visibility of modal by id (show/hide)
+  function toggleModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.classList.toggle('hidden');
+    modal.classList.toggle('flex');
+  }
+
+  // Switch from one modal to another (close one, open another)
+  function switchModal(closeId, openId) {
+    const closeModal = document.getElementById(closeId);
+    closeModal.classList.add('hidden');
+    closeModal.classList.remove('flex');
+
+    const openModal = document.getElementById(openId);
+    openModal.classList.remove('hidden');
+    openModal.classList.add('flex');
+  }
+
+  // Toggle dropdown visibility by id, close others
+  function toggleDropdown(dropdownId) {
+    document.querySelectorAll('[id^="dropdown-"]').forEach(dropdown => {
+      if (dropdown.id !== dropdownId) {
+        dropdown.classList.add('hidden');
+      }
+    });
+
+    const dropdown = document.getElementById(dropdownId);
+    dropdown.classList.toggle('hidden');
+  }
+
+  // Open edit modal and populate fields
+  function openEditModal(task) {
+    const modal = document.getElementById('editModal');
+    modal.setAttribute('data-task-id', task.TodoTaskId);
+
+    document.getElementById('editTitle').value = task.Title || '';
+    document.getElementById('editDescription').value = task.Description || '';
+    document.getElementById('editLabelId').value = task.LabelId ?? '';
+    document.getElementById('editPriority').value = task.Priority || 'MEDIUM';
+    document.getElementById('editDueDate').value = task.DueDate ? task.DueDate.split('T')[0] : '';
+
+    toggleModal('editModal');
+  }
+
+  // Save edited task via POST API call
+  async function saveTask() {
+    const taskId = document.getElementById('editModal').getAttribute('data-task-id');
+
+    const updatedTask = {
+      TodoTaskId: parseInt(taskId),
+      Title: document.getElementById('editTitle').value.trim(),
+      Description: document.getElementById('editDescription').value.trim(),
+      LabelId: document.getElementById('editLabelId').value || null,
+      Priority: document.getElementById('editPriority').value,
+      DueDate: document.getElementById('editDueDate').value
+    };
+
+    try {
+      const response = await fetch('/Home/Edit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'RequestVerificationToken': antiForgeryToken
+        },
+        body: JSON.stringify(updatedTask)
+      });
+
+      if (!response.ok) {
+        let errorText = 'Unknown error';
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          errorText = JSON.stringify(errorData);
+        } else {
+          errorText = await response.text();
+        }
+
+        document.getElementById('editFormErrors').textContent = 'Error: ' + errorText;
+        return;
+      }
+
+      document.getElementById('editFormErrors').textContent = '';
+      toggleModal('editModal');
+      location.reload();
+    } catch (error) {
+      document.getElementById('editFormErrors').textContent = 'Failed to update task: ' + error.message;
+    }
+  }
+
+  // Attach saveTask to button click event
+  document.getElementById('saveEditButton').addEventListener('click', saveTask);
+
+  // Delete task card from UI and backend, no alerts
+  async function deleteTask(button, taskId) {
+    try {
+      const response = await fetch(`/Home/Delete/${taskId}`, {
+        method: 'POST',  // or 'DELETE' if supported by your backend
+        headers: {
+          'Content-Type': 'application/json',
+          'RequestVerificationToken': antiForgeryToken
+        }
+      });
+
+      if (response.ok) {
+        // Remove the task card container
+        const taskCard = button.closest('.task-card');
+        if (taskCard) {
+          taskCard.remove();
+        }
+      }
+      // no alerts on failure or error as requested
+    } catch {
+      // silently fail, no alert
+    }
+  }
+
+  // Close dropdowns and modals when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('[onclick^="toggleDropdown"]') && !e.target.closest('[id^="dropdown"]')) {
+      document.querySelectorAll('[id^="dropdown"]').forEach(dropdown => {
+        dropdown.classList.add('hidden');
+      });
+    }
+
+    if (e.target.classList.contains('bg-black')) {
+      const modals = document.querySelectorAll('[id$="Modal"]');
+      modals.forEach(modal => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      });
+    }
+  });
+</script>
+
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+
+<script>
+  const antiForgeryToken = '@Antiforgery.GetAndStoreTokens(Context).RequestToken';
+</script>
+
+
+
+
+
